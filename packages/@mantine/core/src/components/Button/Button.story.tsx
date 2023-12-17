@@ -252,6 +252,11 @@ export function Loading() {
 
 export function ToggleLoading() {
   const [loading, setLoading] = React.useState(false);
+  function setLoadingByPromise() {
+    return new Promise((reslove) => {
+      setTimeout(reslove, 2000);
+    });
+  }
   return (
     <div style={{ padding: 40, display: 'flex', gap: 20 }}>
       <Button loading={loading} size="lg">
@@ -260,6 +265,10 @@ export function ToggleLoading() {
 
       <Button onClick={() => setLoading((l) => !l)} size="lg">
         Toggle loading state
+      </Button>
+
+      <Button onClick={setLoadingByPromise} size="lg">
+        Toggle loading by Promise
       </Button>
     </div>
   );

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   BoxProps,
   createVarsResolver,
+  ElementProps,
   getFontSize,
   getRadius,
   getSize,
@@ -46,7 +47,10 @@ export type ButtonCssVariables = {
     | '--button-bd';
 };
 
-export interface ButtonProps extends BoxProps, StylesApiProps<ButtonFactory> {
+export interface ButtonProps
+  extends ElementProps<'button'>,
+    BoxProps,
+    StylesApiProps<ButtonFactory> {
   'data-disabled'?: boolean;
 
   /** Controls button `height`, `font-size` and horizontal `padding`, `'sm'` by default */
@@ -98,6 +102,11 @@ export type ButtonFactory = PolymorphicFactory<{
   };
 }>;
 
+// 判断是否是 Promise 的辅助函数
+function isPromise(obj: any): obj is Promise<any> {
+  return obj instanceof Promise;
+}
+
 const defaultProps: Partial<ButtonProps> = {};
 
 const varsResolver = createVarsResolver<ButtonFactory>(
@@ -142,13 +151,14 @@ export const Button = polymorphicFactory<ButtonFactory>((_props, ref) => {
     fullWidth,
     variant,
     radius,
-    loading,
+    loading: outerLoading,
     loaderProps,
     gradient,
     classNames,
     styles,
     unstyled,
     'data-disabled': dataDisabled,
+    onClick,
     ...others
   } = props;
 
@@ -168,6 +178,22 @@ export const Button = polymorphicFactory<ButtonFactory>((_props, ref) => {
   const hasLeftSection = !!leftSection;
   const hasRightSection = !!rightSection;
 
+  const [interLoading, setInterLoading] = useState(false);
+
+  function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
+    if (typeof onClick !== 'function') {
+      return;
+    }
+    const handleClickRespond = onClick(event);
+    // 检查 handleClickRespond 是否是 Promise
+    if (isPromise(handleClickRespond)) {
+      setInterLoading(true);
+      handleClickRespond.finally(() => setInterLoading(false));
+    }
+  }
+
+  const loading = interLoading || outerLoading;
+
   return (
     <UnstyledButton
       ref={ref}
@@ -182,6 +208,7 @@ export const Button = polymorphicFactory<ButtonFactory>((_props, ref) => {
         'with-left-section': hasLeftSection,
         'with-right-section': hasRightSection,
       }}
+      onClick={handleClick}
       {...others}
     >
       <Box component="span" {...getStyles('loader')} aria-hidden>
